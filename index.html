@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="SAND UNIVERSE is a minimalist falling-sand zen sandbox. Build Nothing. Watch Everything.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SAND UNIVERSE">
+  <meta property="og:description" content="Build Nothing. Watch Everything.">
+  <meta property="og:image" content="https://hiromipod-art.github.io/SANDUNIVERSE-/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://hiromipod-art.github.io/SANDUNIVERSE-/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SAND UNIVERSE">
+  <meta name="twitter:description" content="Build Nothing. Watch Everything.">
+  <meta name="twitter:image" content="https://hiromipod-art.github.io/SANDUNIVERSE-/og-image.png">
+  <title>SAND UNIVERSE</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --fg: rgba(246, 246, 246, 0.92);
+      --muted: rgba(246, 246, 246, 0.58);
+      --line: rgba(255, 255, 255, 0.2);
+      --panel: rgba(0, 0, 0, 0.34);
+      --active: rgba(255, 255, 255, 0.9);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      color: var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      letter-spacing: 0;
+      overscroll-behavior: none;
+      touch-action: none;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100svh;
+      display: block;
+      background: #000;
+      image-rendering: pixelated;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .title {
+      position: fixed;
+      top: max(18px, env(safe-area-inset-top));
+      left: max(18px, env(safe-area-inset-left));
+      z-index: 2;
+      pointer-events: none;
+      text-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+      transition: opacity 180ms ease;
+    }
+
+    .title h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.15rem, 5vw, 2.1rem);
+      font-weight: 700;
+      line-height: 0.95;
+    }
+
+    .title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(0.66rem, 2.6vw, 0.86rem);
+      line-height: 1.35;
+    }
+
+    .controls {
+      position: fixed;
+      left: 50%;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      z-index: 3;
+      width: min(calc(100vw - 24px), 620px);
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .tools,
+    .actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    .tools {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .actions {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    button,
+    input[type="range"] {
+      font: inherit;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--fg);
+      text-transform: uppercase;
+      font-size: clamp(0.58rem, 2.1vw, 0.72rem);
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(255, 255, 255, 0.7);
+      background: var(--active);
+      color: #000;
+    }
+
+    .brush {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 28px;
+      color: var(--muted);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #f4f4f4;
+    }
+
+    .zen .controls {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 12px);
+    }
+
+    .zen .title {
+      opacity: 0.54;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    @media (min-width: 720px) {
+      .controls {
+        right: max(18px, env(safe-area-inset-right));
+        left: auto;
+        bottom: max(18px, env(safe-area-inset-bottom));
+        width: 420px;
+        transform: none;
+      }
+
+      .zen .controls {
+        transform: translateY(12px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="sand" aria-label="SAND UNIVERSE falling sand canvas"></canvas>
+
+  <header class="title" id="titleOverlay" aria-hidden="true">
+    <h1>SAND UNIVERSE</h1>
+    <p>Build Nothing. Watch Everything.</p>
+  </header>
+
+  <nav class="controls" aria-label="Simulation controls">
+    <div class="tools" role="group" aria-label="Sand tools">
+      <button class="tool" type="button" data-tool="sand" aria-pressed="true">Sand</button>
+      <button class="tool" type="button" data-tool="dig" aria-pressed="false">Dig</button>
+      <button class="tool" type="button" data-tool="wall" aria-pressed="false">Wall</button>
+    </div>
+    <div class="actions" role="group" aria-label="Simulation actions">
+      <button id="wind" type="button" aria-pressed="false">Wind</button>
+      <button id="rain" type="button" aria-pressed="false">Rain</button>
+      <button id="pause" type="button" aria-pressed="false">Pause</button>
+      <button id="clear" type="button">Clear</button>
+      <button id="zen" type="button" aria-pressed="false">Zen</button>
+    </div>
+    <label class="brush" for="brush">
+      <span>Brush</span>
+      <input id="brush" type="range" min="2" max="18" value="8">
+      <span id="brushValue">8</span>
+    </label>
+  </nav>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("sand");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const toolButtons = [...document.querySelectorAll(".tool")];
+      const windButton = document.getElementById("wind");
+      const rainButton = document.getElementById("rain");
+      const pauseButton = document.getElementById("pause");
+      const clearButton = document.getElementById("clear");
+      const zenButton = document.getElementById("zen");
+      const titleOverlay = document.getElementById("titleOverlay");
+      const brushInput = document.getElementById("brush");
+      const brushValue = document.getElementById("brushValue");
+
+      const field = document.createElement("canvas");
+      const fctx = field.getContext("2d", { alpha: false });
+      let image;
+
+      let cols = 0;
+      let rows = 0;
+      let cell = 3;
+      let sand = new Uint8Array(0);
+      let shade = new Uint8Array(0);
+      let tool = "sand";
+      let windOn = false;
+      let rainOn = false;
+      let paused = false;
+      let windClock = 0;
+      let windDir = 1;
+      let lastTime = performance.now();
+      let frameSkip = 0;
+
+      const activePointers = new Map();
+
+      const index = (x, y) => y * cols + x;
+      const inside = (x, y) => x >= 0 && x < cols && y >= 0 && y < rows;
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const width = Math.max(1, Math.floor(window.innerWidth));
+        const height = Math.max(1, Math.floor(window.innerHeight));
+
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+        ctx.imageSmoothingEnabled = false;
+
+        // A coarse grid keeps the cellular automata fast on phones while retaining a crisp sand texture.
+        cell = width < 520 ? 3 : width < 1100 ? 4 : 5;
+        cols = Math.floor(width / cell);
+        rows = Math.floor(height / cell);
+
+        field.width = cols;
+        field.height = rows;
+        image = fctx.createImageData(cols, rows);
+        sand = new Uint8Array(cols * rows);
+        shade = new Uint8Array(cols * rows);
+      }
+
+      function paint(clientX, clientY, radius, selectedTool = tool) {
+        const x = Math.floor(clientX / cell);
+        const y = Math.floor(clientY / cell);
+        const r = Math.max(1, radius | 0);
+        const r2 = r * r;
+        const jitter = selectedTool === "wall" ? 0.08 : 0.24;
+
+        for (let yy = -r; yy <= r; yy++) {
+          for (let xx = -r; xx <= r; xx++) {
+            if (xx * xx + yy * yy > r2 || Math.random() < jitter) continue;
+            const gx = x + xx;
+            const gy = y + yy;
+            if (!inside(gx, gy)) continue;
+            const i = index(gx, gy);
+
+            if (selectedTool === "dig") {
+              sand[i] = 0;
+              shade[i] = 0;
+            } else if (selectedTool === "wall") {
+              sand[i] = 2;
+              shade[i] = 52 + (Math.random() * 54) | 0;
+            } else if (!sand[i]) {
+              sand[i] = 1;
+              shade[i] = 168 + (Math.random() * 64) | 0;
+            }
+          }
+        }
+      }
+
+      function move(from, to) {
+        sand[to] = 1;
+        shade[to] = shade[from];
+        sand[from] = 0;
+        shade[from] = 0;
+      }
+
+      function stepSand() {
+        windClock++;
+        if (windClock % 150 === 0) windDir *= -1;
+
+        // Bottom-up updates allow falling grains to settle naturally in one pass.
+        for (let y = rows - 2; y >= 0; y--) {
+          const leftFirst = Math.random() < 0.5;
+          const xStart = leftFirst ? 0 : cols - 1;
+          const xEnd = leftFirst ? cols : -1;
+          const xStep = leftFirst ? 1 : -1;
+
+          for (let x = xStart; x !== xEnd; x += xStep) {
+            const i = index(x, y);
+            if (sand[i] !== 1) continue;
+
+            const below = i + cols;
+            if (!sand[below]) {
+              move(i, below);
+              continue;
+            }
+
+            const first = Math.random() < 0.5 ? -1 : 1;
+            const second = -first;
+            const dx1 = first;
+            const dx2 = second;
+            const d1 = x + dx1;
+            const d2 = x + dx2;
+
+            if (d1 >= 0 && d1 < cols && !sand[below + dx1]) {
+              move(i, below + dx1);
+              continue;
+            }
+
+            if (d2 >= 0 && d2 < cols && !sand[below + dx2]) {
+              move(i, below + dx2);
+              continue;
+            }
+
+            // Rare sideways slips soften perfect stair-steps and create small avalanches.
+            if (Math.random() < 0.018) {
+              const slide = Math.random() < 0.5 ? -1 : 1;
+              const sx = x + slide;
+              const side = i + slide;
+              if (sx > 0 && sx < cols - 1 && !sand[side] && !sand[side + cols]) {
+                move(i, side);
+                continue;
+              }
+            }
+
+            // Wind only affects exposed or loose grains, slowly shaving and rebuilding dunes.
+            if (windOn && windClock % 2 === 0 && Math.random() < 0.22) {
+              const wx = x + windDir;
+              const wi = i + windDir;
+              if (wx > 0 && wx < cols - 1 && !sand[wi] && (!sand[i - cols] || Math.random() < 0.2)) {
+                if (!sand[wi + cols] || Math.random() < 0.18) move(i, wi);
+              }
+            }
+          }
+        }
+      }
+
+      function pourFromPointers() {
+        const radius = Number(brushInput.value);
+        for (const pointer of activePointers.values()) {
+          paint(pointer.x, pointer.y, radius, pointer.tool);
+        }
+      }
+
+      function rain() {
+        if (!rainOn) return;
+        const drops = Math.max(2, Math.floor(cols / 50));
+        for (let n = 0; n < drops; n++) {
+          const x = Math.floor(Math.random() * cols);
+          const y = Math.floor(Math.random() * 4);
+          const i = index(x, y);
+          if (!sand[i]) {
+            sand[i] = 1;
+            shade[i] = 174 + (Math.random() * 58) | 0;
+          }
+        }
+      }
+
+      function render() {
+        const data = image.data;
+        for (let i = 0, p = 0; i < sand.length; i++, p += 4) {
+          if (sand[i] === 1) {
+            const v = shade[i];
+            data[p] = v;
+            data[p + 1] = v;
+            data[p + 2] = v;
+          } else if (sand[i] === 2) {
+            const v = shade[i];
+            data[p] = v;
+            data[p + 1] = v;
+            data[p + 2] = v + 8;
+          } else {
+            data[p] = 0;
+            data[p + 1] = 0;
+            data[p + 2] = 0;
+          }
+          data[p + 3] = 255;
+        }
+
+        fctx.putImageData(image, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(field, 0, 0, canvas.width, canvas.height);
+      }
+
+      function loop(now) {
+        const dt = now - lastTime;
+        lastTime = now;
+
+        if (!paused) {
+          pourFromPointers();
+          rain();
+          const iterations = dt > 34 ? 1 : 2;
+          for (let i = 0; i < iterations; i++) stepSand();
+        }
+
+        // Rendering every other frame on very dense desktop grids keeps interaction smooth.
+        frameSkip = (frameSkip + 1) % (cols * rows > 110000 ? 2 : 1);
+        if (frameSkip === 0) render();
+        requestAnimationFrame(loop);
+      }
+
+      function pointerPosition(event) {
+        return {
+          x: Math.max(0, Math.min(window.innerWidth, event.clientX)),
+          y: Math.max(0, Math.min(window.innerHeight, event.clientY))
+        };
+      }
+
+      function startPointer(event) {
+        event.preventDefault();
+        const pos = pointerPosition(event);
+        activePointers.set(event.pointerId, { ...pos, tool });
+        paint(pos.x, pos.y, Number(brushInput.value) + 1, tool);
+        canvas.setPointerCapture?.(event.pointerId);
+      }
+
+      function movePointer(event) {
+        if (!activePointers.has(event.pointerId)) return;
+        event.preventDefault();
+        const next = pointerPosition(event);
+        const prev = activePointers.get(event.pointerId);
+        const dx = next.x - prev.x;
+        const dy = next.y - prev.y;
+        const distance = Math.hypot(dx, dy);
+        const steps = Math.max(1, Math.ceil(distance / (cell * 2)));
+
+        for (let s = 1; s <= steps; s++) {
+          const t = s / steps;
+          paint(prev.x + dx * t, prev.y + dy * t, Number(brushInput.value), prev.tool);
+        }
+        activePointers.set(event.pointerId, { ...next, tool: prev.tool });
+      }
+
+      function endPointer(event) {
+        activePointers.delete(event.pointerId);
+        canvas.releasePointerCapture?.(event.pointerId);
+      }
+
+      function setTool(nextTool) {
+        tool = nextTool;
+        toolButtons.forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.tool === tool));
+        });
+      }
+
+      toolButtons.forEach((button) => {
+        button.addEventListener("click", () => setTool(button.dataset.tool));
+      });
+
+      windButton.addEventListener("click", () => {
+        windOn = !windOn;
+        windButton.setAttribute("aria-pressed", String(windOn));
+      });
+
+      rainButton.addEventListener("click", () => {
+        rainOn = !rainOn;
+        rainButton.setAttribute("aria-pressed", String(rainOn));
+      });
+
+      pauseButton.addEventListener("click", () => {
+        paused = !paused;
+        pauseButton.textContent = paused ? "Resume" : "Pause";
+        pauseButton.setAttribute("aria-pressed", String(paused));
+      });
+
+      clearButton.addEventListener("click", () => {
+        sand.fill(0);
+        shade.fill(0);
+        render();
+      });
+
+      function setZenMode(on) {
+        const zen = Boolean(on);
+        document.body.classList.toggle("zen", zen);
+        zenButton.setAttribute("aria-pressed", String(zen));
+      }
+
+      zenButton.addEventListener("click", () => setZenMode(!document.body.classList.contains("zen")));
+      titleOverlay.addEventListener("click", () => {
+        if (document.body.classList.contains("zen")) setZenMode(false);
+      });
+
+      brushInput.addEventListener("input", () => {
+        brushValue.textContent = brushInput.value;
+      });
+
+      canvas.addEventListener("pointerdown", startPointer, { passive: false });
+      canvas.addEventListener("pointermove", movePointer, { passive: false });
+      canvas.addEventListener("pointerup", endPointer, { passive: false });
+      canvas.addEventListener("pointercancel", endPointer, { passive: false });
+      window.addEventListener("resize", resize);
+      window.addEventListener("orientationchange", () => setTimeout(resize, 180));
+      document.addEventListener("contextmenu", (event) => event.preventDefault());
+      document.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+
+      resize();
+      render();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
